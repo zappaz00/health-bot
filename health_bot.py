@@ -5,9 +5,11 @@ import logging
 from telebot import types
 from datetime import datetime
 from random import randint
-import sqlite3
+import psycopg2
 
-db_name = 'Health.db'
+DATABASE_URL = os.getenv('DATABASE_URL')
+db_conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+db_conn.autocommit = True
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.DEBUG)
@@ -36,21 +38,11 @@ def exception_catcher(base_function):
 
 @exception_catcher
 def init_db():
-    db_conn = sqlite3.connect(db_name)
     cur = db_conn.cursor()
     # Create tables
-    cur.execute('''PRAGMA busy_timeout = 10000''')
-    cur.execute('''PRAGMA foreign_keys = OFF''')
 
-    cur.execute('''CREATE TABLE IF NOT EXISTS activity
-                (user_id integer NOT NULL, date text, time text, action_id REFERENCES action_types(action_id), proof_id 
-                REFERENCES proof_types(proof_id), chat_id integer,
-                UNIQUE(user_id,date) )''')
-    cur.execute('''CREATE TABLE IF NOT EXISTS user_achieves
-                (user_id integer NOT NULL, achieve_id REFERENCES achieves(achieve_id),
-                UNIQUE(user_id, achieve_id))''')
     cur.execute('''CREATE TABLE IF NOT EXISTS user_levels
-                (user_id integer PRIMARY KEY, level integer)''')
+                (user_id bigint PRIMARY KEY, level integer)''')
     cur.execute('''CREATE TABLE IF NOT EXISTS achieves
                 (achieve_id integer PRIMARY KEY, name text)''')
     cur.execute('''CREATE TABLE IF NOT EXISTS levels
@@ -60,41 +52,44 @@ def init_db():
     cur.execute('''CREATE TABLE IF NOT EXISTS proof_types
                 (proof_id integer PRIMARY KEY, name text)''')
 
-    cur.execute('''INSERT OR IGNORE INTO action_types(action_id, name) VALUES ('0', 'task')''')
-    cur.execute('''INSERT OR IGNORE INTO action_types(action_id, name) VALUES ('1', 'pass')''')
-    cur.execute('''INSERT OR IGNORE INTO action_types(action_id, name) VALUES ('2', 'force major')''')
+    cur.execute('''INSERT INTO action_types(action_id, name) VALUES ('0', 'task') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO action_types(action_id, name) VALUES ('1', 'pass') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO action_types(action_id, name) VALUES ('2', 'force major') ON CONFLICT DO NOTHING''')
 
-    cur.execute('''INSERT OR IGNORE INTO proof_types(proof_id, name) VALUES ('0', 'photo')''')
-    cur.execute('''INSERT OR IGNORE INTO proof_types(proof_id, name) VALUES ('1', 'video')''')
+    cur.execute('''INSERT INTO proof_types(proof_id, name) VALUES ('0', 'photo') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO proof_types(proof_id, name) VALUES ('1', 'video') ON CONFLICT DO NOTHING''')
 
-    cur.execute('''INSERT OR IGNORE INTO achieves(achieve_id, name) VALUES ('0', 'Ранняя пташка')''')
-    cur.execute('''INSERT OR IGNORE INTO achieves(achieve_id, name) VALUES ('1', 'Дневная бабочка')''')
-    cur.execute('''INSERT OR IGNORE INTO achieves(achieve_id, name) VALUES ('2', 'Поздняя пташка')''')
-    cur.execute('''INSERT OR IGNORE INTO achieves(achieve_id, name) VALUES ('3', 'Ночная бабочка')''')
-    cur.execute('''INSERT OR IGNORE INTO achieves(achieve_id, name) VALUES ('4', 'Фотоохотник')''')
-    cur.execute('''INSERT OR IGNORE INTO achieves(achieve_id, name) VALUES ('5', 'Сам себе режиссёр')''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('0', 'Ранняя пташка') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('1', 'Дневная бабочка') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('2', 'Поздняя пташка') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('3', 'Ночная бабочка') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('4', 'Фотоохотник') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('5', 'Сам себе режиссёр') ON CONFLICT DO NOTHING''')
 
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('0',  'Киберспортмен')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('1',  'Зелёный')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('2',  'Подтянутый')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('3',  'Фитоняш')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('4',  'Стальный мышцы')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('5',  'Мощный')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('6',  'Опытный боец')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('7',  'Победитель по жизни')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('8',  'Мастер')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('9',  'Гуру')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('10', 'Тибетский монах')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('11', 'Легендарный')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('12', 'Бесконечность не предел')''')
-    cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('13', 'Спортивный маньяк')''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('0',  'Киберспортмен') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('1',  'Зелёный') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('2',  'Подтянутый') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('3',  'Фитоняш') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('4',  'Стальный мышцы') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('5',  'Мощный') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('6',  'Опытный боец') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('7',  'Победитель по жизни') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('8',  'Мастер') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('9',  'Гуру') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('10', 'Тибетский монах') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('11', 'Легендарный') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('12', 'Бесконечность не предел') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('13', 'Спортивный маньяк') ON CONFLICT DO NOTHING''')
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS activity
+                (user_id bigint NOT NULL, date text, time text, action_id integer REFERENCES action_types(action_id), 
+                proof_id integer REFERENCES proof_types(proof_id), chat_id bigint,
+                UNIQUE(user_id,date) )''')
+    cur.execute('''CREATE TABLE IF NOT EXISTS user_achieves
+                (user_id bigint NOT NULL, achieve_id integer REFERENCES achieves(achieve_id),
+                UNIQUE(user_id, achieve_id))''')
 
     root_logger.info('DB initialized')
-
-    cur.execute('''PRAGMA foreign_keys = ON''')
-
-    db_conn.commit()
-    db_conn.close()
 
 
 @exception_catcher
@@ -139,7 +134,6 @@ def send_pass(message):
 def send_gift(message):
     bot.send_chat_action(message.chat.id, 'typing')
 
-    db_conn = sqlite3.connect(db_name)
     cur_thread = db_conn.cursor()
     cur_thread.execute(f'''SELECT DISTINCT user_id FROM activity WHERE user_id!={message.from_user.id} 
                        AND chat_id={message.chat.id}''')
@@ -151,9 +145,6 @@ def send_gift(message):
 
     user_gift_id = randint(0, len(users_gift) - 1)
     user_gift_id = users_gift[user_gift_id][0]
-
-    db_conn.commit()
-    db_conn.close()
 
     chat_member = bot.get_chat_member(message.chat.id, user_gift_id)
     bot.reply_to(message, f'Подарочек нужно подарить {chat_member.user.first_name} ({chat_member.user.username}) :)')
@@ -170,7 +161,6 @@ def pass_button(call):
     date_time = datetime.fromtimestamp(call.message.date)
     date_str = date_time.strftime("%m/%d/%Y")
     time_str = date_time.strftime("%H:%M:%S")
-    db_conn = sqlite3.connect(db_name)
     cur_thread = db_conn.cursor()
 
     if call.data == "procrastinate":
@@ -184,7 +174,7 @@ def pass_button(call):
         try:
             cur_thread.execute(
                 f'''INSERT INTO activity VALUES ({call.from_user.id},'{date_str}','{time_str}',{action_id[0]},
-                NULL,{call.message.chat.id})''')
+                NULL,{call.message.chat.id}) ON CONFLICT DO NOTHING''')
 
             if call.data == "procrastinate":
                 bot.send_message(call.message.chat.id, f'О нет! {call.from_user.first_name} покупает подарочек!'
@@ -192,11 +182,8 @@ def pass_button(call):
             else:
                 bot.send_message(call.message.chat.id,
                                  f'У Пети болит, у Маши болит, а у {call.from_user.first_name} не болит!')
-        except sqlite3.IntegrityError:
+        except psycopg2.IntegrityError:
             root_logger.error('Record already added')
-
-    db_conn.commit()
-    db_conn.close()
 
     bot.delete_message(call.message.chat.id, call.message.id)
 
@@ -206,7 +193,6 @@ def pass_button(call):
 def send_stat(message):
     bot.send_chat_action(message.chat.id, 'typing')
 
-    db_conn = sqlite3.connect(db_name)
     cur_thread = db_conn.cursor()
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND chat_id={message.chat.id}''')
     user_stat = cur_thread.fetchall()
@@ -253,9 +239,6 @@ def send_stat(message):
         if level_name is not None and len(level_name) != 0:
             message_str = message_str + f' ({level_name[0]})'
 
-    db_conn.commit()
-    db_conn.close()
-
     bot.reply_to(message, message_str)
 
 
@@ -275,7 +258,8 @@ def give_achieve(user_id, chat_id, cur_thread):
 
     cur_thread.execute(f'''SELECT level FROM user_levels WHERE user_id={user_id}''')
     level_curr = cur_thread.fetchone()
-    cur_thread.execute(f'''INSERT OR REPLACE INTO user_levels VALUES ({user_id},'{calc_level}')''')
+    cur_thread.execute(f'''INSERT INTO user_levels VALUES ({user_id},'{calc_level}') 
+                       ON CONFLICT DO UPDATE SET level = EXCLUDED.level''')
 
     achieve_str = ''
     if level_curr is None or (len(level_curr) > 0 and level_curr[0] != calc_level):
@@ -307,13 +291,14 @@ def give_achieve(user_id, chat_id, cur_thread):
     for achieve_ctr in range(len(achieve_counts)):
         if achieve_counts[achieve_ctr] == 20:
             try:
-                cur_thread.execute(f'''INSERT OR REPLACE INTO user_achieves VALUES ({user_id},'{achieve_ctr}')''')
+                cur_thread.execute(f'''INSERT INTO user_achieves VALUES ({user_id},'{achieve_ctr}') 
+                                   ON CONFLICT DO NOTHING''')
                 cur_thread.execute(f'''SELECT name FROM achieves WHERE achieve_id={achieve_ctr}''')
                 achieve_name = cur_thread.fetchone()
                 if achieve_name is not None and len(achieve_name) > 0:
                     achieve_str += f'Достижение: {achieve_name[0]}\n'
 
-            except sqlite3.IntegrityError:
+            except psycopg2.IntegrityError:
                 root_logger.error('Achieve already exists!')
 
     return achieve_str
@@ -328,7 +313,6 @@ def get_media_messages(message):
     if message.photo is None and message.video is None:
         bot.reply_to(message, 'Загрузи фото/видео')
     else:
-        db_conn = sqlite3.connect(db_name)
         cur_thread = db_conn.cursor()
         date_time = datetime.fromtimestamp(message.date)
         date_str = date_time.strftime("%m/%d/%Y")
@@ -349,10 +333,8 @@ def get_media_messages(message):
                 cur_thread.execute(
                     f'''INSERT INTO activity VALUES ({message.from_user.id},'{date_str}','{time_str}',{action_id[0]},
                     {proof_id[0]},{message.chat.id})''')
-            except sqlite3.IntegrityError:
+            except psycopg2.IntegrityError:
                 root_logger.error('Record already added')
-                db_conn.commit()
-                db_conn.close()
                 return
 
         bot.reply_to(message, f'Умничка, {message.from_user.first_name}, засчитано!')
@@ -366,9 +348,7 @@ def get_media_messages(message):
             sticker = open('stickers/' + sticker_filenames[sticker_number], 'rb')
             bot.send_sticker(message.chat.id, sticker, message.id)
 
-        db_conn.commit()
-        db_conn.close()
-
 
 init_db()
 bot.polling(none_stop=True)
+db_conn.close()
