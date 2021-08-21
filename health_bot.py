@@ -228,9 +228,10 @@ def send_stat(message):
     cur_thread.execute(f'''SELECT level FROM user_levels WHERE user_id={message.from_user.id}''')
     level_curr = cur_thread.fetchone()
 
-    message_str = f'''Кол-во занятий: {task_count},\n
-    Кол-во пропусков: {pass_count},\n
-    Кол-во форс-мажоров: {force_major_count}'''
+    message_str = ''
+    message_str = message_str + f'Кол-во занятий:      {task_count},\n'
+    message_str = message_str + f'Кол-во пропусков:    {pass_count},\n'
+    message_str = message_str + f'Кол-во форс-мажоров: {force_major_count}'
 
     if level_curr is not None and len(level_curr) != 0:
         cur_thread.execute(f'''SELECT name FROM levels WHERE level={level_curr[0]}''')
