@@ -8,7 +8,12 @@ from random import randint
 import sqlite3
 
 db_name = 'Health.db'
-logging.basicConfig(filename='health.log', level=logging.DEBUG)
+
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler('health.log', 'w', 'utf-8')
+handler.setFormatter(logging.Formatter('%(name)s %(message)s'))
+root_logger.addHandler(handler)
 
 token = os.getenv("HEALTH_TOKEN")
 bot = telebot.TeleBot(token)
@@ -21,8 +26,11 @@ def exception_catcher(base_function):
         try:
             return base_function(*args, **kwargs)  # base_function is whatever function this decorator is applied to
         except Exception as e:
-            logging.error(base_function.__name__ + ' => ' + str(
-                e))  # Replace this with whatever you want, as long as it's the same for all possible base_functions
+            date_time = datetime.now()
+            date_str = date_time.strftime("%m/%d/%Y %H:%M:%S")
+            err_msg = date_str + ': ' + base_function.__name__ + ' => ' + str(e)
+            print(err_msg)
+            root_logger.error(err_msg)
 
     return new_function
 
@@ -82,7 +90,7 @@ def init_db():
     cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('12', 'Бесконечность не предел')''')
     cur.execute('''INSERT OR IGNORE INTO levels(level, name) VALUES ('13', 'Спортивный маньяк')''')
 
-    logging.info('DB initialized')
+    root_logger.info('DB initialized')
 
     cur.execute('''PRAGMA foreign_keys = ON''')
 
@@ -156,7 +164,7 @@ def pass_button(call):
                 bot.send_message(call.message.chat.id,
                                  f'У Пети болит, у Маши болит, а у {call.from_user.first_name} не болит!')
         except sqlite3.IntegrityError:
-            logging.error('Record already added')
+            root_logger.error('Record already added')
 
     db_conn.commit()
     db_conn.close()
@@ -277,7 +285,7 @@ def give_achieve(user_id, chat_id, cur_thread):
                     achieve_str += f'Достижение: {achieve_name[0]}\n'
 
             except sqlite3.IntegrityError:
-                print("Achieve already exists!")
+                root_logger.error('Achieve already exists!')
 
     return achieve_str
 
@@ -310,7 +318,7 @@ def get_media_messages(message):
                     f'''INSERT INTO activity VALUES ({message.from_user.id},'{date_str}','{time_str}',{action_id[0]},
                     {proof_id[0]},{message.chat.id})''')
             except sqlite3.IntegrityError:
-                logging.error('Record already added')
+                root_logger.error('Record already added')
                 db_conn.commit()
                 db_conn.close()
                 return
