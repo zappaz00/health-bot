@@ -17,7 +17,6 @@ root_logger.addHandler(handler)
 
 token = os.getenv("HEALTH_TOKEN")
 bot = telebot.TeleBot(token)
-bot.get_updates()
 
 
 def exception_catcher(base_function):
@@ -110,7 +109,11 @@ def send_welcome(message):
 @bot.message_handler(commands=['help'])
 def send_help(message):
     bot.send_chat_action(message.chat.id, 'typing')
-    bot.reply_to(message, '/start - начать\n/check - сдать\n/pass - пропустить\n/stat - запросить свою статистику')
+    bot.reply_to(message, '/start - начать\n'
+                          '/check - сдать\n'
+                          '/pass - пропустить\n'
+                          '/stat - запросить свою статистику\n'
+                          '/gift - узнать, кому дарить подарочек')
 
 
 @exception_catcher
@@ -129,6 +132,31 @@ def send_pass(message):
     reply_markup.row(itembtn1, itembtn2)
 
     bot.reply_to(message, 'Что случилось?', reply_markup=reply_markup)
+
+
+@exception_catcher
+@bot.message_handler(commands=['gift'])
+def send_gift(message):
+    bot.send_chat_action(message.chat.id, 'typing')
+
+    db_conn = sqlite3.connect(db_name)
+    cur_thread = db_conn.cursor()
+    cur_thread.execute(f'''SELECT DISTINCT user_id FROM activity WHERE user_id!={message.from_user.id} 
+                       AND chat_id={message.chat.id}''')
+    users_gift = cur_thread.fetchall()
+
+    if users_gift is None or len(users_gift) == 0:
+        bot.reply_to(message, 'Некому дарить подарочек(')
+        return
+
+    user_gift_id = randint(0, len(users_gift) - 1)
+    user_gift_id = users_gift[user_gift_id][0]
+
+    db_conn.commit()
+    db_conn.close()
+
+    chat_member = bot.get_chat_member(message.chat.id, user_gift_id)
+    bot.reply_to(message, f'Подарочек нужно подарить {chat_member.user.first_name} ({chat_member.user.username}) :)')
 
 
 @exception_catcher
@@ -159,7 +187,8 @@ def pass_button(call):
                 NULL,{call.message.chat.id})''')
 
             if call.data == "procrastinate":
-                bot.send_message(call.message.chat.id, f'О нет! {call.from_user.first_name} покупает сидр!')
+                bot.send_message(call.message.chat.id, f'О нет! {call.from_user.first_name} покупает подарочек!'
+                                                       f'Используй /gift, чтоб узнать кому дарить')
             else:
                 bot.send_message(call.message.chat.id,
                                  f'У Пети болит, у Маши болит, а у {call.from_user.first_name} не болит!')
