@@ -110,14 +110,14 @@ def send_welcome(message):
 def send_help(message):
     bot.send_chat_action(message.chat.id, 'typing')
     bot.reply_to(message, '/start - начать\n'
-                          '/check - сдать\n'
                           '/pass - пропустить\n'
                           '/stat - запросить свою статистику\n'
-                          '/gift - узнать, кому дарить подарочек')
+                          '/gift - узнать, кому дарить подарочек\n\n'
+                          'Чтобы сдать упражнение загрузи фото или видео с подписью "check"')
 
 
 @exception_catcher
-@bot.message_handler(commands=['check'])
+@bot.message_handler(content_types=['photo', 'video'])
 def send_check(message):
     bot.send_chat_action(message.chat.id, 'typing')
     get_media_messages(message)
@@ -247,7 +247,7 @@ def send_stat(message):
     Кол-во форс-мажоров: {force_major_count}'''
 
     if level_curr is not None and len(level_curr) != 0:
-        cur_thread.execute(f'''SELECT name FROM levels WHERE level={level_curr}''')
+        cur_thread.execute(f'''SELECT name FROM levels WHERE level={level_curr[0]}''')
         level_name = cur_thread.fetchone()
         message_str = message_str + '\n' + f'Твой уровень: {level_curr[0]}'
         if level_name is not None and len(level_name) != 0:
@@ -321,6 +321,9 @@ def give_achieve(user_id, chat_id, cur_thread):
 
 @exception_catcher
 def get_media_messages(message):
+    if message.caption.lower() != 'check':
+        return
+
     bot.send_chat_action(message.chat.id, 'typing')
     if message.photo is None and message.video is None:
         bot.reply_to(message, 'Загрузи фото/видео')
