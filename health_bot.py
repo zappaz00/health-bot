@@ -44,7 +44,7 @@ def init_db():
     cur.execute('''CREATE TABLE IF NOT EXISTS user_levels
                 (user_id bigint PRIMARY KEY, level integer, firstname text, username text);''')
     cur.execute('''CREATE TABLE IF NOT EXISTS user_states
-                (user_id bigint PRIMARY KEY, state integer);''')
+                (user_id bigint PRIMARY KEY, state integer, task_type text);''')
     cur.execute('''CREATE TABLE IF NOT EXISTS achieves
                 (achieve_id integer PRIMARY KEY, name text);''')
     cur.execute('''CREATE TABLE IF NOT EXISTS levels
@@ -128,10 +128,10 @@ def send_check(message):
     if exist_activity is not None and len(exist_activity) != 0:
         bot.reply_to(message, 'Запись о твоей активности уже есть :)')
     else:
-        cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1) 
-                               ON CONFLICT (user_id) DO UPDATE SET state = EXCLUDED.state;''')
-
-        bot.register_next_step_handler(message, get_media_messages, 'check')
+        cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1, 'check') 
+                               ON CONFLICT (user_id) DO UPDATE SET 
+                               state = EXCLUDED.state,
+                               task_type = EXCLUDED.task_type;''')
         bot.reply_to(message, 'Просто загрузи фото или видео :)')
 
 
@@ -149,10 +149,10 @@ def send_debt(message):
     if exist_activity is not None and len(exist_activity) != 0:
         bot.reply_to(message, 'Запись о твоей активности уже есть :)')
     else:
-        cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1) 
-                               ON CONFLICT (user_id) DO UPDATE SET state = EXCLUDED.state;''')
-
-        bot.register_next_step_handler(message, get_media_messages, 'debt')
+        cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1, 'debt') 
+                               ON CONFLICT (user_id) DO UPDATE SET 
+                               state = EXCLUDED.state
+                               task_type = EXCLUDED.task_type;''')
         bot.reply_to(message, 'Просто загрузи фото или видео :)')
 
 
@@ -360,18 +360,19 @@ def give_achieve(user_id, chat_id, cur_thread):
 
 @exception_catcher
 @bot.message_handler(content_types=['photo', 'video'])
-def get_media_messages(message, task_type=''):
+def get_media_messages(message):
 
     cur_thread = db_conn.cursor()
-    cur_thread.execute(f'''SELECT state FROM user_states WHERE user_id={message.from_user.id};''')
+    cur_thread.execute(f'''SELECT * FROM user_states WHERE user_id={message.from_user.id};''')
     user_state = cur_thread.fetchone()
 
-    if user_state is None or (len(user_state) != 0 and user_state[0] != 1):
-        bot.register_next_step_handler(message, get_media_messages, task_type)
+    if user_state is None or (len(user_state) != 0 and user_state[0][1] != 1):
         return
 
     cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 0) 
-                           ON CONFLICT (user_id) DO UPDATE SET state = EXCLUDED.state;''')
+                           ON CONFLICT (user_id) DO UPDATE SET 
+                           state = EXCLUDED.state,
+                           task_type = EXCLUDED.task_type;''')
 
     bot.send_chat_action(message.chat.id, 'typing')
     if message.photo is None and message.video is None:
@@ -380,7 +381,7 @@ def get_media_messages(message, task_type=''):
         cur_thread = db_conn.cursor()
         date_time = datetime.fromtimestamp(message.date)
 
-        if task_type == 'debt':
+        if user_state[2] == 'debt':
             date_time = date_time - timedelta(days=1)
 
         date_str = date_time.strftime("%m/%d/%Y")
