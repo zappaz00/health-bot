@@ -3,7 +3,7 @@ import telebot
 import os
 import logging
 from telebot import types
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import randint
 import psycopg2
 
@@ -42,52 +42,54 @@ def init_db():
     # Create tables
 
     cur.execute('''CREATE TABLE IF NOT EXISTS user_levels
-                (user_id bigint PRIMARY KEY, level integer)''')
+                (user_id bigint PRIMARY KEY, level integer, firstname text, username text);''')
+    cur.execute('''CREATE TABLE IF NOT EXISTS user_states
+                (user_id bigint PRIMARY KEY, state integer);''')
     cur.execute('''CREATE TABLE IF NOT EXISTS achieves
-                (achieve_id integer PRIMARY KEY, name text)''')
+                (achieve_id integer PRIMARY KEY, name text);''')
     cur.execute('''CREATE TABLE IF NOT EXISTS levels
-                (level integer PRIMARY KEY, name text)''')
+                (level integer PRIMARY KEY, name text);''')
     cur.execute('''CREATE TABLE IF NOT EXISTS action_types
-                (action_id integer PRIMARY KEY, name text)''')
+                (action_id integer PRIMARY KEY, name text);''')
     cur.execute('''CREATE TABLE IF NOT EXISTS proof_types
-                (proof_id integer PRIMARY KEY, name text)''')
+                (proof_id integer PRIMARY KEY, name text);''')
 
-    cur.execute('''INSERT INTO action_types(action_id, name) VALUES ('0', 'task') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO action_types(action_id, name) VALUES ('1', 'pass') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO action_types(action_id, name) VALUES ('2', 'force major') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO action_types(action_id, name) VALUES ('0', 'task') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO action_types(action_id, name) VALUES ('1', 'pass') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO action_types(action_id, name) VALUES ('2', 'force major') ON CONFLICT DO NOTHING;''')
 
-    cur.execute('''INSERT INTO proof_types(proof_id, name) VALUES ('0', 'photo') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO proof_types(proof_id, name) VALUES ('1', 'video') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO proof_types(proof_id, name) VALUES ('0', 'photo') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO proof_types(proof_id, name) VALUES ('1', 'video') ON CONFLICT DO NOTHING;''')
 
-    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('0', 'Ранняя пташка') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('1', 'Дневная бабочка') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('2', 'Поздняя пташка') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('3', 'Ночная бабочка') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('4', 'Фотоохотник') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('5', 'Сам себе режиссёр') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('0', 'Ранняя пташка') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('1', 'Дневная бабочка') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('2', 'Поздняя пташка') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('3', 'Ночная бабочка') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('4', 'Фотоохотник') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO achieves(achieve_id, name) VALUES ('5', 'Сам себе режиссёр') ON CONFLICT DO NOTHING;''')
 
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('0',  'Киберспортмен') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('1',  'Зелёный') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('2',  'Подтянутый') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('3',  'Фитоняш') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('4',  'Стальный мышцы') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('5',  'Мощный') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('6',  'Опытный боец') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('7',  'Победитель по жизни') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('8',  'Мастер') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('9',  'Гуру') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('10', 'Тибетский монах') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('11', 'Легендарный') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('12', 'Бесконечность не предел') ON CONFLICT DO NOTHING''')
-    cur.execute('''INSERT INTO levels(level, name) VALUES ('13', 'Спортивный маньяк') ON CONFLICT DO NOTHING''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('0',  'Киберспортмен') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('1',  'Зелёный') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('2',  'Подтянутый') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('3',  'Фитоняш') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('4',  'Стальный мышцы') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('5',  'Мощный') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('6',  'Опытный боец') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('7',  'Победитель по жизни') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('8',  'Мастер') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('9',  'Гуру') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('10', 'Тибетский монах') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('11', 'Легендарный') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('12', 'Бесконечность не предел') ON CONFLICT DO NOTHING;''')
+    cur.execute('''INSERT INTO levels(level, name) VALUES ('13', 'Спортивный маньяк') ON CONFLICT DO NOTHING;''')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS activity
                 (user_id bigint NOT NULL, date text, time text, action_id integer REFERENCES action_types(action_id), 
                 proof_id integer REFERENCES proof_types(proof_id), chat_id bigint,
-                UNIQUE(user_id,date) )''')
+                UNIQUE(user_id,date) );''')
     cur.execute('''CREATE TABLE IF NOT EXISTS user_achieves
                 (user_id bigint NOT NULL, achieve_id integer REFERENCES achieves(achieve_id),
-                UNIQUE(user_id, achieve_id))''')
+                UNIQUE(user_id, achieve_id));''')
 
     root_logger.info('DB initialized')
 
@@ -105,22 +107,68 @@ def send_welcome(message):
 def send_help(message):
     bot.send_chat_action(message.chat.id, 'typing')
     bot.reply_to(message, '/start - начать\n'
-                          '/pass - пропустить\n'
+                          '/pass - пропустить тренировку\n'
                           '/stat - запросить свою статистику\n'
-                          '/gift - узнать, кому дарить подарочек\n\n'
-                          'Чтобы сдать упражнение загрузи фото или видео с подписью "check"')
+                          '/check - сдать тренировку\n'
+                          '/debt - отработать долг за вчера\n'
+                          '/gift - узнать, кому дарить подарочек')
 
 
 @exception_catcher
-@bot.message_handler(content_types=['photo', 'video'])
+@bot.message_handler(commands=['check'])
 def send_check(message):
     bot.send_chat_action(message.chat.id, 'typing')
-    get_media_messages(message)
+
+    date_time = datetime.fromtimestamp(message.date)
+    date_str = date_time.strftime("%m/%d/%Y")
+
+    cur_thread = db_conn.cursor()
+    cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND date='{date_str}';''')
+    exist_activity = cur_thread.fetchone()
+    if len(exist_activity) != 0:
+        bot.reply_to(message, 'Запись о твоей активности уже есть :)')
+    else:
+        cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1) 
+                               ON CONFLICT DO UPDATE SET state = EXCLUDED.state;''')
+
+        bot.register_next_step_handler(message, get_media_messages, 'check')
+        bot.reply_to(message, 'Просто загрузи фото или видео :)')
+
+
+@exception_catcher
+@bot.message_handler(commands=['debt'])
+def send_debt(message):
+    bot.send_chat_action(message.chat.id, 'typing')
+
+    date_time = datetime.fromtimestamp(message.date) - timedelta(days=1)
+    date_str = date_time.strftime("%m/%d/%Y")
+
+    cur_thread = db_conn.cursor()
+    cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND date='{date_str}';''')
+    exist_activity = cur_thread.fetchone()
+    if len(exist_activity) != 0:
+        bot.reply_to(message, 'Запись о твоей активности уже есть :)')
+    else:
+        cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1) 
+                               ON CONFLICT DO UPDATE SET state = EXCLUDED.state;''')
+
+        bot.register_next_step_handler(message, get_media_messages, 'debt')
+        bot.reply_to(message, 'Просто загрузи фото или видео :)')
 
 
 @exception_catcher
 @bot.message_handler(commands=['pass'])
 def send_pass(message):
+    date_time = datetime.fromtimestamp(message.date)
+    date_str = date_time.strftime("%m/%d/%Y")
+
+    cur_thread = db_conn.cursor()
+    cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND date='{date_str}';''')
+    exist_activity = cur_thread.fetchone()
+    if len(exist_activity) != 0:
+        bot.reply_to(message, 'Запись о твоей активности уже есть :)')
+        return
+
     reply_markup = types.InlineKeyboardMarkup(row_width=2)
     itembtn1 = types.InlineKeyboardButton('Лениво/забыл', callback_data='procrastinate')
     itembtn2 = types.InlineKeyboardButton('Форс-Мажор', callback_data='force_major')
@@ -254,13 +302,18 @@ def give_achieve(user_id, chat_id, cur_thread):
     if len(tasks) == 0:
         return ''
 
+    chat_member = bot.get_chat_member(chat_id, user_id)
+
     cur_thread.execute(f'''SELECT name FROM levels WHERE level={calc_level}''')
     level_name = cur_thread.fetchone()
 
     cur_thread.execute(f'''SELECT level FROM user_levels WHERE user_id={user_id}''')
     level_curr = cur_thread.fetchone()
-    cur_thread.execute(f'''INSERT INTO user_levels VALUES ({user_id},'{calc_level}') 
-                       ON CONFLICT DO UPDATE SET level = EXCLUDED.level''')
+    cur_thread.execute(f'''INSERT INTO user_levels VALUES ({user_id}, {calc_level}) 
+                       ON CONFLICT DO UPDATE SET 
+                       level = EXCLUDED.level, 
+                       firstname = '{chat_member.user.first_name}', 
+                       username = '{chat_member.user.username}';''')
 
     achieve_str = ''
     if level_curr is None or (len(level_curr) > 0 and level_curr[0] != calc_level):
@@ -306,16 +359,30 @@ def give_achieve(user_id, chat_id, cur_thread):
 
 
 @exception_catcher
-def get_media_messages(message):
-    if message.caption.lower() != 'check':
+@bot.message_handler(content_types=['photo', 'video'])
+def get_media_messages(message, task_type):
+
+    cur_thread = db_conn.cursor()
+    cur_thread.execute(f'''SELECT state FROM user_states WHERE user_id={message.from_user.id};''')
+    user_state = cur_thread.fetchone()
+
+    if len(user_state) != 0 and user_state[0] != 1:
+        bot.register_next_step_handler(message, get_media_messages, task_type)
         return
+
+    cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 0) 
+                           ON CONFLICT DO UPDATE SET state = EXCLUDED.state;''')
 
     bot.send_chat_action(message.chat.id, 'typing')
     if message.photo is None and message.video is None:
-        bot.reply_to(message, 'Загрузи фото/видео')
+        bot.reply_to(message, 'Неправильный формат, попробуй ещё раз :)')
     else:
         cur_thread = db_conn.cursor()
         date_time = datetime.fromtimestamp(message.date)
+
+        if task_type == 'debt':
+            date_time = date_time - timedelta(days=1)
+
         date_str = date_time.strftime("%m/%d/%Y")
         time_str = date_time.strftime("%H:%M:%S")
         cur_thread.execute(f'''SELECT action_id FROM action_types WHERE name='task' LIMIT 1''')
