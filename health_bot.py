@@ -125,7 +125,7 @@ def send_check(message):
     cur_thread = db_conn.cursor()
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND date='{date_str}';''')
     exist_activity = cur_thread.fetchone()
-    if len(exist_activity) != 0:
+    if exist_activity is not None and len(exist_activity) != 0:
         bot.reply_to(message, 'Запись о твоей активности уже есть :)')
     else:
         cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1) 
@@ -146,7 +146,7 @@ def send_debt(message):
     cur_thread = db_conn.cursor()
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND date='{date_str}';''')
     exist_activity = cur_thread.fetchone()
-    if len(exist_activity) != 0:
+    if exist_activity is not None and len(exist_activity) != 0:
         bot.reply_to(message, 'Запись о твоей активности уже есть :)')
     else:
         cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1) 
@@ -366,7 +366,7 @@ def get_media_messages(message, task_type):
     cur_thread.execute(f'''SELECT state FROM user_states WHERE user_id={message.from_user.id};''')
     user_state = cur_thread.fetchone()
 
-    if len(user_state) != 0 and user_state[0] != 1:
+    if user_state is None or (len(user_state) != 0 and user_state[0] != 1):
         bot.register_next_step_handler(message, get_media_messages, task_type)
         return
 
