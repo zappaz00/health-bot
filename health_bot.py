@@ -366,7 +366,7 @@ def get_media_messages(message):
     cur_thread.execute(f'''SELECT * FROM user_states WHERE user_id={message.from_user.id};''')
     user_state = cur_thread.fetchone()
 
-    if user_state is None or (len(user_state) != 0 and user_state[0][1] != 1):
+    if user_state is None or (len(user_state) != 0 and user_state[1] != 1):
         return
 
     cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 0) 
