@@ -129,7 +129,7 @@ def send_check(message):
         bot.reply_to(message, 'Запись о твоей активности уже есть :)')
     else:
         cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1) 
-                               ON CONFLICT DO UPDATE SET state = EXCLUDED.state;''')
+                               ON CONFLICT (user_id) DO UPDATE SET state = EXCLUDED.state;''')
 
         bot.register_next_step_handler(message, get_media_messages, 'check')
         bot.reply_to(message, 'Просто загрузи фото или видео :)')
@@ -150,7 +150,7 @@ def send_debt(message):
         bot.reply_to(message, 'Запись о твоей активности уже есть :)')
     else:
         cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1) 
-                               ON CONFLICT DO UPDATE SET state = EXCLUDED.state;''')
+                               ON CONFLICT (user_id) DO UPDATE SET state = EXCLUDED.state;''')
 
         bot.register_next_step_handler(message, get_media_messages, 'debt')
         bot.reply_to(message, 'Просто загрузи фото или видео :)')
@@ -310,7 +310,7 @@ def give_achieve(user_id, chat_id, cur_thread):
     cur_thread.execute(f'''SELECT level FROM user_levels WHERE user_id={user_id}''')
     level_curr = cur_thread.fetchone()
     cur_thread.execute(f'''INSERT INTO user_levels VALUES ({user_id}, {calc_level}) 
-                       ON CONFLICT DO UPDATE SET 
+                       ON CONFLICT (user_id) DO UPDATE SET 
                        level = EXCLUDED.level, 
                        firstname = '{chat_member.user.first_name}', 
                        username = '{chat_member.user.username}';''')
@@ -371,7 +371,7 @@ def get_media_messages(message, task_type):
         return
 
     cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 0) 
-                           ON CONFLICT DO UPDATE SET state = EXCLUDED.state;''')
+                           ON CONFLICT (user_id) DO UPDATE SET state = EXCLUDED.state;''')
 
     bot.send_chat_action(message.chat.id, 'typing')
     if message.photo is None and message.video is None:
