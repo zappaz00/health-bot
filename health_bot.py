@@ -360,7 +360,7 @@ def give_achieve(user_id, chat_id, cur_thread):
 
 @exception_catcher
 @bot.message_handler(content_types=['photo', 'video'])
-def get_media_messages(message, task_type):
+def get_media_messages(message, task_type=''):
 
     cur_thread = db_conn.cursor()
     cur_thread.execute(f'''SELECT state FROM user_states WHERE user_id={message.from_user.id};''')
