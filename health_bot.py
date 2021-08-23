@@ -151,7 +151,7 @@ def send_debt(message):
     else:
         cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 1, 'debt') 
                                ON CONFLICT (user_id) DO UPDATE SET 
-                               state = EXCLUDED.state
+                               state = EXCLUDED.state,
                                task_type = EXCLUDED.task_type;''')
         bot.reply_to(message, 'Просто загрузи фото или видео :)')
 
