@@ -4,6 +4,7 @@ import os
 import logging
 from telebot import types
 from datetime import datetime, timedelta
+from pytz import timezone
 from random import randint
 import psycopg2
 
@@ -27,7 +28,7 @@ def exception_catcher(base_function):
         try:
             return base_function(*args, **kwargs)  # base_function is whatever function this decorator is applied to
         except Exception as e:
-            date_time = datetime.now()
+            date_time = datetime.now(timezone('Europe/Moscow'))
             date_str = date_time.strftime("%m/%d/%Y %H:%M:%S")
             err_msg = date_str + ': ' + base_function.__name__ + ' => ' + str(e)
             print(err_msg)
@@ -119,7 +120,7 @@ def send_help(message):
 def send_check(message):
     bot.send_chat_action(message.chat.id, 'typing')
 
-    date_time = datetime.fromtimestamp(message.date)
+    date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow'))
     date_str = date_time.strftime("%m/%d/%Y")
 
     cur_thread = db_conn.cursor()
@@ -140,7 +141,7 @@ def send_check(message):
 def send_debt(message):
     bot.send_chat_action(message.chat.id, 'typing')
 
-    date_time = datetime.fromtimestamp(message.date) - timedelta(days=1)
+    date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow')) - timedelta(days=1)
     date_str = date_time.strftime("%m/%d/%Y")
 
     cur_thread = db_conn.cursor()
@@ -159,7 +160,7 @@ def send_debt(message):
 @exception_catcher
 @bot.message_handler(commands=['pass'])
 def send_pass(message):
-    date_time = datetime.fromtimestamp(message.date)
+    date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow'))
     date_str = date_time.strftime("%m/%d/%Y")
 
     cur_thread = db_conn.cursor()
@@ -206,7 +207,7 @@ def pass_button(call):
 
     bot.send_chat_action(call.message.chat.id, 'typing')
 
-    date_time = datetime.fromtimestamp(call.message.date)
+    date_time = datetime.fromtimestamp(call.message.date, timezone('Europe/Moscow'))
     date_str = date_time.strftime("%m/%d/%Y")
     time_str = date_time.strftime("%H:%M:%S")
     cur_thread = db_conn.cursor()
@@ -379,7 +380,7 @@ def get_media_messages(message):
         bot.reply_to(message, 'Неправильный формат, попробуй ещё раз :)')
     else:
         cur_thread = db_conn.cursor()
-        date_time = datetime.fromtimestamp(message.date)
+        date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow'))
 
         if user_state[2] == 'debt':
             date_time = date_time - timedelta(days=1)
