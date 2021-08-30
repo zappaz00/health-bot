@@ -2,6 +2,7 @@ import datetime
 import telebot
 import os
 import logging
+import numpy as np
 from telebot import types
 from datetime import datetime, timedelta
 from pytz import timezone
@@ -107,12 +108,13 @@ def send_welcome(message):
 @bot.message_handler(commands=['help'])
 def send_help(message):
     bot.send_chat_action(message.chat.id, 'typing')
-    bot.reply_to(message, '/start - начать\n'
-                          '/pass - пропустить тренировку\n'
-                          '/stat - запросить свою статистику\n'
-                          '/check - сдать тренировку\n'
+    bot.reply_to(message, '/check - сдать тренировку\n' 
                           '/debt - отработать долг за вчера\n'
-                          '/gift - узнать, кому дарить подарочек')
+                          '/gift - узнать, кому дарить подарочек\n'
+                          '/pass - пропустить тренировку\n'
+                          '/plan - получить задание\n'
+                          '/start - начать\n'
+                          '/stat - запросить свою статистику')
 
 
 @exception_catcher
@@ -155,6 +157,17 @@ def send_debt(message):
                                state = EXCLUDED.state,
                                task_type = EXCLUDED.task_type;''')
         bot.reply_to(message, 'Просто загрузи фото или видео :)')
+
+
+@exception_catcher
+@bot.message_handler(commands=['plan'])
+def send_plan(message):
+    bot.send_chat_action(message.chat.id, 'typing')
+    gif_filenames = os.listdir('training')
+    gif_perm = np.random.permutation(len(gif_filenames))
+    for i in range(3):
+        gif_file = open('training/' + gif_filenames[gif_perm[i]], 'rb')
+        bot.send_animation(message.chat.id, gif_file, message.id)
 
 
 @exception_catcher
