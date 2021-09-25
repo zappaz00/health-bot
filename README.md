@@ -34,3 +34,5 @@ Health Bot implemented on Python and works with Telegram (username: @health_or_c
 ## Future scope
 
 - Add recognize of human body in video and generate recommendation for training
+
+https://core.telegram.org/bots/api
