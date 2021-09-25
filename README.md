@@ -1,6 +1,6 @@
 <h1 align="center">Health Bot</h1>
 
-<p align="center"><img src="./readme_assets/bot_info.png" width="100%"></p>
+<p align="center"><img src="readme_assets/bot_info.png" width="100%"></p>
 
 ## Description
 
@@ -18,7 +18,7 @@ Health Bot implemented on Python and works with Telegram (username: @health_or_c
 - **/start** start talking with bot
 - **/stat**  get your personal statistic
 
-<p align="center"><img  src="./readme_assets/check_command.png" width="30%"></p>
-<p align="center"><img  src="./readme_assets/help_command.png" width="30%"></p>
-<p align="center"><img  src="./readme_assets/plan_command.png" width="30%"></p>
-<p align="center"><img  src="./readme_assets/stat_command.png" width="30%"></p>
+<p align="center"><img  src="readme_assets/check_command.png" width="30%"></p>
+<p align="center"><img  src="readme_assets/help_command.png" width="30%"></p>
+<p align="center"><img  src="readme_assets/plan_command.png" width="30%"></p>
+<p align="center"><img  src="readme_assets/stat_command.png" width="30%"></p>
