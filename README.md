@@ -18,7 +18,18 @@ Health Bot implemented on Python and works with Telegram (username: @health_or_c
 - **/start** start talking with bot
 - **/stat**  get your personal statistic
 
-<p align="center"><img  src="./readme_assets/check_command.PNG" width="30%"></p>
-<p align="center"><img  src="./readme_assets/help_command.PNG" width="30%"></p>
-<p align="center"><img  src="./readme_assets/plan_command.PNG" width="30%"></p>
-<p align="center"><img  src="./readme_assets/stat_command.PNG" width="30%"></p>
+/check example:
+<p align="center"><img  src="./readme_assets/check_command.PNG" width="40%"></p>
+
+/help example:
+<p align="center"><img  src="./readme_assets/help_command.PNG" width="40%"></p>
+
+/plan example:
+<p align="center"><img  src="./readme_assets/plan_command.PNG" width="40%"></p>
+
+/stat example:
+<p align="center"><img  src="./readme_assets/stat_command.PNG" width="40%"></p>
+
+## Future scope
+
+- Add recognize of human body in video and generate recommendation for training
