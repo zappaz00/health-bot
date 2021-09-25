@@ -4,7 +4,7 @@
 
 ## Description
 
-Health Bot implemented on Python and works with Telegram (username: @health_or_cider_bot). It will help you with training.
+Health Bot implemented on Python and works with Telegram (username: @health_or_cider_bot). It will help you with training and accumulate your personal statistic.
 
 ## How to use
 
@@ -18,17 +18,18 @@ Health Bot implemented on Python and works with Telegram (username: @health_or_c
 - **/start** start talking with bot
 - **/stat**  get your personal statistic
 
+
 /check example:
-<p align="center"><img  src="./readme_assets/check_command.PNG" width="40%"></p>
+<p align="center"><img  src="./readme_assets/check_command.PNG" width="60%"></p>
 
 /help example:
-<p align="center"><img  src="./readme_assets/help_command.PNG" width="40%"></p>
+<p align="center"><img  src="./readme_assets/help_command.PNG" width="60%"></p>
 
 /plan example:
-<p align="center"><img  src="./readme_assets/plan_command.PNG" width="40%"></p>
+<p align="center"><img  src="./readme_assets/plan_command.PNG" width="60%"></p>
 
 /stat example:
-<p align="center"><img  src="./readme_assets/stat_command.PNG" width="40%"></p>
+<p align="center"><img  src="./readme_assets/stat_command.PNG" width="60%"></p>
 
 ## Future scope
 
