@@ -233,8 +233,8 @@ def send_stat(message):
         if level_name is not None and len(level_name) != 0:
             message_str = message_str + f' ({level_name[0]})'
 
-    cur_thread.execute(f'''SELECT name FROM user_achieves WHERE user_id={message.from_user.id} INNER JOIN achieves 
-                        ON user_achieves.achieve_id=achieves.achieve_id''')
+    cur_thread.execute(f'''SELECT name FROM user_achieves INNER JOIN achieves 
+                        ON user_achieves.achieve_id=achieves.achieve_id AND user_id={message.from_user.id}''')
     user_achieves = cur_thread.fetchall()
 
     for user_achieve in user_achieves:
