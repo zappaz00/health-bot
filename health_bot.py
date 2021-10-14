@@ -3,7 +3,6 @@ import telebot
 import os
 import logging
 import numpy as np
-from telebot import types
 from datetime import datetime, timedelta
 from pytz import timezone
 from random import randint
@@ -111,7 +110,6 @@ def send_help(message):
     bot.reply_to(message, '/check - сдать тренировку\n' 
                           '/debt - отработать долг за вчера\n'
                           '/gift - узнать, кому дарить подарочек\n'
-                          '/pass - пропустить тренировку\n'
                           '/plan - получить задание\n'
                           '/start - начать\n'
                           '/stat - запросить свою статистику')
@@ -171,27 +169,6 @@ def send_plan(message):
 
 
 @exception_catcher
-@bot.message_handler(commands=['pass'])
-def send_pass(message):
-    date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow'))
-    date_str = date_time.strftime("%m/%d/%Y")
-
-    cur_thread = db_conn.cursor()
-    cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND date='{date_str}';''')
-    exist_activity = cur_thread.fetchone()
-    if len(exist_activity) != 0:
-        bot.reply_to(message, 'Запись о твоей активности уже есть :)')
-        return
-
-    reply_markup = types.InlineKeyboardMarkup(row_width=2)
-    itembtn1 = types.InlineKeyboardButton('Лениво/забыл', callback_data='procrastinate')
-    itembtn2 = types.InlineKeyboardButton('Форс-Мажор', callback_data='force_major')
-    reply_markup.row(itembtn1, itembtn2)
-
-    bot.reply_to(message, 'Что случилось?', reply_markup=reply_markup)
-
-
-@exception_catcher
 @bot.message_handler(commands=['gift'])
 def send_gift(message):
     bot.send_chat_action(message.chat.id, 'typing')
@@ -213,79 +190,34 @@ def send_gift(message):
 
 
 @exception_catcher
-@bot.callback_query_handler(func=lambda call: True)
-def pass_button(call):
-    if call is None:
-        return
-
-    bot.send_chat_action(call.message.chat.id, 'typing')
-
-    date_time = datetime.fromtimestamp(call.message.date, timezone('Europe/Moscow'))
-    date_str = date_time.strftime("%m/%d/%Y")
-    time_str = date_time.strftime("%H:%M:%S")
-    cur_thread = db_conn.cursor()
-
-    if call.data == "procrastinate":
-        cur_thread.execute(f'''SELECT action_id FROM action_types WHERE name='pass' LIMIT 1''')
-        action_id = cur_thread.fetchone()
-    else:
-        cur_thread.execute(f'''SELECT action_id FROM action_types WHERE name='force major' LIMIT 1''')
-        action_id = cur_thread.fetchone()
-
-    if action_id is not None and len(action_id) == 1:
-        try:
-            cur_thread.execute(
-                f'''INSERT INTO activity VALUES ({call.from_user.id},'{date_str}','{time_str}',{action_id[0]},
-                NULL,{call.message.chat.id}) ON CONFLICT DO NOTHING''')
-
-            if call.data == "procrastinate":
-                bot.send_message(call.message.chat.id, f'О нет! {call.from_user.first_name} покупает подарочек!'
-                                                       f'Используй /gift, чтоб узнать кому дарить')
-            else:
-                bot.send_message(call.message.chat.id,
-                                 f'У Пети болит, у Маши болит, а у {call.from_user.first_name} не болит!')
-        except psycopg2.IntegrityError:
-            root_logger.error('Record already added')
-
-    bot.delete_message(call.message.chat.id, call.message.id)
-
-
-@exception_catcher
 @bot.message_handler(commands=['stat'])
 def send_stat(message):
     bot.send_chat_action(message.chat.id, 'typing')
 
     cur_thread = db_conn.cursor()
-    cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND chat_id={message.chat.id}''')
+    cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} 
+                                                    AND chat_id={message.chat.id} 
+                                                    AND action_id=0''')
     user_stat = cur_thread.fetchall()
     if len(user_stat) == 0:
         bot.reply_to(message, 'Чтобы увидеть статистику загрузи свою первую тренировку!')
         return
 
-    cur_thread.execute(f'''SELECT * FROM action_types''')
-    action_types = cur_thread.fetchall()
+    first_train = user_stat[0]
+    last_train = user_stat[-1]
 
-    actions_count = {}
-    for record in user_stat:
-        if len(record) < 6 or record[3] is None:
-            continue
+    if len(first_train) < 6 or len(last_train) < 6:
+        return
 
-        if actions_count.get(record[3]) is None:
-            actions_count[record[3]] = 0
+    if first_train[1] is None or last_train[1] is None:
+        return
 
-        actions_count[record[3]] += 1
+    datetime_first = datetime.strptime(first_train[1], '%d/%m/%y')
+    datetime_last = datetime.strptime(last_train[1], '%d/%m/%y')
+    datetime_interval = int(str(datetime_last - datetime_first).split()[0])
 
-    pass_count = 0
-    task_count = 0
-    force_major_count = 0
-    for action_type in action_types:
-        if actions_count.get(action_type[0]) is not None:
-            if action_type[1] == 'task':
-                task_count = actions_count[action_type[0]]
-            elif action_type[1] == 'pass':
-                pass_count = actions_count[action_type[0]]
-            elif action_type[1] == 'force major':
-                force_major_count = actions_count[action_type[0]]
+    task_count = len(user_stat)
+    pass_count = max(datetime_interval - task_count, 0)
 
     cur_thread.execute(f'''SELECT level FROM user_levels WHERE user_id={message.from_user.id}''')
     level_curr = cur_thread.fetchone()
@@ -293,7 +225,6 @@ def send_stat(message):
     message_str = ''
     message_str = message_str + f'Кол-во занятий:      {task_count},\n'
     message_str = message_str + f'Кол-во пропусков:    {pass_count},\n'
-    message_str = message_str + f'Кол-во форс-мажоров: {force_major_count}'
 
     if level_curr is not None and len(level_curr) != 0:
         cur_thread.execute(f'''SELECT name FROM levels WHERE level={level_curr[0]}''')
@@ -301,6 +232,13 @@ def send_stat(message):
         message_str = message_str + '\n' + f'Твой уровень: {level_curr[0]}'
         if level_name is not None and len(level_name) != 0:
             message_str = message_str + f' ({level_name[0]})'
+
+    cur_thread.execute(f'''SELECT name FROM user_achieves WHERE user_id={message.from_user.id} INNER JOIN achieves 
+                        ON user_achieves.achieve_id=achieves.achieve_id''')
+    user_achieves = cur_thread.fetchall()
+
+    for user_achieve in user_achieves:
+        message_str = message_str + '\n' + f'Есть достижение: {user_achieve[0]}'
 
     bot.reply_to(message, message_str)
 
@@ -358,6 +296,11 @@ def give_achieve(user_id, chat_id, cur_thread):
 
     for achieve_ctr in range(len(achieve_counts)):
         if achieve_counts[achieve_ctr] == 20:
+            cur_thread.execute(f'''SELECT * FROM user_achieves WHERE user_id={user_id} AND achieve_id={achieve_ctr}''')
+            achieve_existed = cur_thread.fetchone()
+            if achieve_existed is not None:
+                continue
+
             try:
                 cur_thread.execute(f'''INSERT INTO user_achieves VALUES ({user_id},'{achieve_ctr}') 
                                    ON CONFLICT DO NOTHING''')
@@ -400,8 +343,6 @@ def get_media_messages(message):
 
         date_str = date_time.strftime("%m/%d/%Y")
         time_str = date_time.strftime("%H:%M:%S")
-        cur_thread.execute(f'''SELECT action_id FROM action_types WHERE name='task' LIMIT 1''')
-        action_id = cur_thread.fetchone()
 
         proof_name = ''
         if message.photo is not None:
@@ -411,10 +352,10 @@ def get_media_messages(message):
         cur_thread.execute(f'''SELECT proof_id FROM proof_types WHERE name='{proof_name}' LIMIT 1''')
         proof_id = cur_thread.fetchone()
 
-        if proof_id is not None and len(proof_id) == 1 and action_id is not None and len(action_id) == 1:
+        if proof_id is not None and len(proof_id) == 1:
             try:
                 cur_thread.execute(
-                    f'''INSERT INTO activity VALUES ({message.from_user.id},'{date_str}','{time_str}',{action_id[0]},
+                    f'''INSERT INTO activity VALUES ({message.from_user.id},'{date_str}','{time_str}',{0},
                     {proof_id[0]},{message.chat.id})''')
             except psycopg2.IntegrityError:
                 root_logger.error('Record already added')
