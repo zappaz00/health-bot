@@ -295,7 +295,7 @@ def give_achieve(user_id, chat_id, cur_thread):
             achieve_counts[5] += 1
 
     for achieve_ctr in range(len(achieve_counts)):
-        if achieve_counts[achieve_ctr] == 20:
+        if achieve_counts[achieve_ctr] >= 20:
             cur_thread.execute(f'''SELECT * FROM user_achieves WHERE user_id={user_id} AND achieve_id={achieve_ctr}''')
             achieve_existed = cur_thread.fetchone()
             if achieve_existed is not None:
