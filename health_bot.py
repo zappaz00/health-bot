@@ -212,8 +212,8 @@ def send_stat(message):
     if first_train[1] is None or last_train[1] is None:
         return
 
-    datetime_first = datetime.strptime(first_train[1], '%d/%m/%y')
-    datetime_last = datetime.strptime(last_train[1], '%d/%m/%y')
+    datetime_first = datetime.strptime(first_train[1], '%m/%d/%Y')
+    datetime_last = datetime.strptime(last_train[1], '%m/%d/%Y')
     datetime_interval = int(str(datetime_last - datetime_first).split()[0])
 
     task_count = len(user_stat)
