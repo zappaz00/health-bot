@@ -224,7 +224,7 @@ def send_stat(message):
 
     message_str = ''
     message_str = message_str + f'Кол-во занятий:      {task_count},\n'
-    message_str = message_str + f'Кол-во пропусков:    {pass_count},\n'
+    message_str = message_str + f'Кол-во пропусков:    {pass_count}'
 
     if level_curr is not None and len(level_curr) != 0:
         cur_thread.execute(f'''SELECT name FROM levels WHERE level={level_curr[0]}''')
