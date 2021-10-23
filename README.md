@@ -13,7 +13,6 @@ Health Bot implemented on Python and works with Telegram (username: @health_or_c
 - **/check** to send your file with training (today)
 - **/debt**  to send your file with training (yesterday)
 - **/gift**  get the name of a friend in a conversation who needs to give a gift for a pass
-- **/pass**  to pass training
 - **/plan**  get training plan
 - **/start** start talking with bot
 - **/stat**  get your personal statistic
