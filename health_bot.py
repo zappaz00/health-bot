@@ -7,10 +7,9 @@ from datetime import datetime, timedelta
 from pytz import timezone
 from random import randint
 import psycopg2
+import atexit
 
 DATABASE_URL = os.getenv('DATABASE_URL')
-db_conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-db_conn.autocommit = True
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.DEBUG)
@@ -20,6 +19,31 @@ root_logger.addHandler(handler)
 
 token = os.getenv("HEALTH_TOKEN")
 bot = telebot.TeleBot(token)
+
+
+class DbEngine:
+    def __init__(self):
+        self.db_conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        self.db_conn.autocommit = True
+        atexit.register(self.cleanup)
+
+    def reconnect(self):
+        try:
+            cur = self.db_conn.cursor()
+            cur.execute('SELECT 1')
+        except psycopg2.OperationalError:
+            self.db_conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+            self.db_conn.autocommit = True
+
+    def get_cursor(self):
+        self.reconnect()  # проверим живо ли соединение
+        return self.db_conn.cursor()
+
+    def cleanup(self):
+        self.db_conn.close()
+
+
+db_engine = DbEngine()
 
 
 def exception_catcher(base_function):
@@ -39,7 +63,7 @@ def exception_catcher(base_function):
 
 @exception_catcher
 def init_db():
-    cur = db_conn.cursor()
+    cur = db_engine.get_cursor()
     # Create tables
 
     cur.execute('''CREATE TABLE IF NOT EXISTS user_levels
@@ -95,15 +119,6 @@ def init_db():
     root_logger.info('DB initialized')
 
 
-def reconnect():
-    try:
-        cur = db_conn.cursor()
-        cur.execute('SELECT 1')
-    except psycopg2.OperationalError:
-        db_conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-        db_conn.autocommit = True
-
-
 @exception_catcher
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -132,9 +147,7 @@ def send_check(message):
     date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow'))
     date_str = date_time.strftime("%m/%d/%Y")
 
-    reconnect()
-
-    cur_thread = db_conn.cursor()
+    cur_thread = db_engine.get_cursor()
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND date='{date_str}';''')
     exist_activity = cur_thread.fetchone()
     if exist_activity is not None and len(exist_activity) != 0:
@@ -155,9 +168,7 @@ def send_debt(message):
     date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow')) - timedelta(days=1)
     date_str = date_time.strftime("%m/%d/%Y")
 
-    reconnect()
-
-    cur_thread = db_conn.cursor()
+    cur_thread = db_engine.get_cursor()
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND date='{date_str}';''')
     exist_activity = cur_thread.fetchone()
     if exist_activity is not None and len(exist_activity) != 0:
@@ -186,9 +197,7 @@ def send_plan(message):
 def send_gift(message):
     bot.send_chat_action(message.chat.id, 'typing')
 
-    reconnect()
-
-    cur_thread = db_conn.cursor()
+    cur_thread = db_engine.get_cursor()
     cur_thread.execute(f'''SELECT DISTINCT user_id FROM activity WHERE user_id!={message.from_user.id} 
                        AND chat_id={message.chat.id}''')
     users_gift = cur_thread.fetchall()
@@ -209,9 +218,7 @@ def send_gift(message):
 def send_stat(message):
     bot.send_chat_action(message.chat.id, 'typing')
 
-    reconnect()
-
-    cur_thread = db_conn.cursor()
+    cur_thread = db_engine.get_cursor()
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} 
                                                     AND chat_id={message.chat.id} 
                                                     AND action_id=0''')
@@ -336,9 +343,7 @@ def give_achieve(user_id, chat_id, cur_thread):
 @bot.message_handler(content_types=['photo', 'video'])
 def get_media_messages(message):
 
-    reconnect()
-
-    cur_thread = db_conn.cursor()
+    cur_thread = db_engine.get_cursor()
     cur_thread.execute(f'''SELECT * FROM user_states WHERE user_id={message.from_user.id};''')
     user_state = cur_thread.fetchone()
 
@@ -354,7 +359,7 @@ def get_media_messages(message):
     if message.photo is None and message.video is None:
         bot.reply_to(message, 'Неправильный формат, попробуй ещё раз :)')
     else:
-        cur_thread = db_conn.cursor()
+        cur_thread = db_engine.get_cursor()
         date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow'))
 
         if user_state[2] == 'debt':
@@ -394,4 +399,3 @@ def get_media_messages(message):
 
 init_db()
 bot.polling(none_stop=True)
-db_conn.close()
