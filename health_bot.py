@@ -95,6 +95,15 @@ def init_db():
     root_logger.info('DB initialized')
 
 
+def reconnect():
+    try:
+        cur = db_conn.cursor()
+        cur.execute('SELECT 1')
+    except psycopg2.OperationalError:
+        db_conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        db_conn.autocommit = True
+
+
 @exception_catcher
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -123,6 +132,8 @@ def send_check(message):
     date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow'))
     date_str = date_time.strftime("%m/%d/%Y")
 
+    reconnect()
+
     cur_thread = db_conn.cursor()
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND date='{date_str}';''')
     exist_activity = cur_thread.fetchone()
@@ -143,6 +154,8 @@ def send_debt(message):
 
     date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow')) - timedelta(days=1)
     date_str = date_time.strftime("%m/%d/%Y")
+
+    reconnect()
 
     cur_thread = db_conn.cursor()
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} AND date='{date_str}';''')
@@ -173,6 +186,8 @@ def send_plan(message):
 def send_gift(message):
     bot.send_chat_action(message.chat.id, 'typing')
 
+    reconnect()
+
     cur_thread = db_conn.cursor()
     cur_thread.execute(f'''SELECT DISTINCT user_id FROM activity WHERE user_id!={message.from_user.id} 
                        AND chat_id={message.chat.id}''')
@@ -193,6 +208,8 @@ def send_gift(message):
 @bot.message_handler(commands=['stat'])
 def send_stat(message):
     bot.send_chat_action(message.chat.id, 'typing')
+
+    reconnect()
 
     cur_thread = db_conn.cursor()
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} 
@@ -318,6 +335,8 @@ def give_achieve(user_id, chat_id, cur_thread):
 @exception_catcher
 @bot.message_handler(content_types=['photo', 'video'])
 def get_media_messages(message):
+
+    reconnect()
 
     cur_thread = db_conn.cursor()
     cur_thread.execute(f'''SELECT * FROM user_states WHERE user_id={message.from_user.id};''')
