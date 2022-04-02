@@ -74,6 +74,8 @@ def init_db():
                 (achieve_id integer PRIMARY KEY, name text);''')
     cur.execute('''CREATE TABLE IF NOT EXISTS levels
                 (level integer PRIMARY KEY, name text);''')
+    cur.execute('''CREATE TABLE IF NOT EXISTS ratings
+                (user_id bigint PRIMARY KEY, rating REAL);''')
     cur.execute('''CREATE TABLE IF NOT EXISTS action_types
                 (action_id integer PRIMARY KEY, name text);''')
     cur.execute('''CREATE TABLE IF NOT EXISTS proof_types
@@ -182,6 +184,25 @@ def send_debt(message):
 
 
 @exception_catcher
+def change_rating(user_id, change_val):
+    filter_val = 0.01
+    cur_thread = db_engine.get_cursor()
+    cur_thread.execute(f'''SELECT rating FROM ratings WHERE user_id={user_id};''')
+    curr_rating = cur_thread.fetchone()
+    if len(curr_rating) == 0:
+        curr_rating = (1-filter_val) * 100 + filter_val * change_val
+    else:
+        curr_rating = (1-filter_val) * curr_rating[0] + filter_val * change_val
+
+    curr_rating = min(max(curr_rating, 0), 100)
+    cur_thread.execute(f'''INSERT INTO ratings VALUES ({user_id}, {curr_rating}) 
+                           ON CONFLICT (user_id) DO UPDATE SET 
+                           rating = EXCLUDED.rating;''')
+
+    return curr_rating
+
+
+@exception_catcher
 @bot.message_handler(commands=['plan'])
 def send_plan(message):
     bot.send_chat_action(message.chat.id, 'typing')
@@ -249,6 +270,9 @@ def send_stat(message):
     message_str = ''
     message_str = message_str + f'Кол-во занятий:      {task_count},\n'
     message_str = message_str + f'Кол-во пропусков:    {pass_count}'
+
+    rating_curr = change_rating(message.from_user.id, 0) #чтоб избежать отсутствия рейтинга
+    message_str = message_str + '\n' + f'Твой рейтинг: {rating_curr}'
 
     if level_curr is not None and len(level_curr) != 0:
         cur_thread.execute(f'''SELECT name FROM levels WHERE level={level_curr[0]}''')
@@ -366,7 +390,7 @@ def get_media_messages(message):
     bot.send_chat_action(message.chat.id, 'typing')
     if message.photo is None and message.video is None:
         bot.reply_to(message, 'Неправильный формат, попробуй ещё раз :)')
-        return 
+        return
     else:
         cur_thread = db_engine.get_cursor()
         date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow'))
@@ -397,6 +421,8 @@ def get_media_messages(message):
                 return
 
         bot.reply_to(message, f'Умничка, {message.from_user.first_name}, засчитано!')
+        change_rating(message.from_user.id, +1)
+
         achieve_name = give_achieve(message.from_user.id, message.chat.id, cur_thread)
         if achieve_name is not None and len(achieve_name) > 0:
             bot.reply_to(message, f'{message.from_user.first_name}, лэвэл ап! Так держать!')
@@ -410,6 +436,7 @@ def get_media_messages(message):
     if date_time_last != date_time_req:
         bot.reply_to(message, 'Похоже ты пропустил занятие, друг мой)) Подари подарок!)')
         send_gift(message)
+        change_rating(-1)
 
 
 init_db()
