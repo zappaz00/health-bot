@@ -350,6 +350,14 @@ def get_media_messages(message):
     if user_state is None or (len(user_state) != 0 and user_state[1] != 1):
         return
 
+    cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} 
+                                                    AND chat_id={message.chat.id} 
+                                                    ORDER BY date DESC LIMIT 1''')
+
+    user_last_activity = cur_thread.fetchone()
+    date_time_last = datetime.strptime(user_last_activity[1], "%m/%d/%Y")
+    date_time_req = datetime.fromtimestamp(message.date, timezone('Europe/Moscow')) - timedelta(days=1)
+
     cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 0) 
                            ON CONFLICT (user_id) DO UPDATE SET 
                            state = EXCLUDED.state,
@@ -358,12 +366,15 @@ def get_media_messages(message):
     bot.send_chat_action(message.chat.id, 'typing')
     if message.photo is None and message.video is None:
         bot.reply_to(message, 'Неправильный формат, попробуй ещё раз :)')
+        return 
     else:
         cur_thread = db_engine.get_cursor()
         date_time = datetime.fromtimestamp(message.date, timezone('Europe/Moscow'))
 
         if user_state[2] == 'debt':
             date_time = date_time - timedelta(days=1)
+
+        date_time_req = date_time - timedelta(days=1)
 
         date_str = date_time.strftime("%m/%d/%Y")
         time_str = date_time.strftime("%H:%M:%S")
@@ -395,6 +406,10 @@ def get_media_messages(message):
             sticker_number = randint(0, len(sticker_filenames) - 1)
             sticker = open('stickers/' + sticker_filenames[sticker_number], 'rb')
             bot.send_sticker(message.chat.id, sticker, message.id)
+
+    if date_time_last != date_time_req:
+        bot.reply_to(message, 'Похоже ты пропустил занятие, друг мой)) Подари подарок!)')
+        send_gift(message)
 
 
 init_db()
