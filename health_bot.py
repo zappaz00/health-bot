@@ -191,16 +191,14 @@ def change_rating(user_id, change_val):
     cur_thread = db_engine.get_cursor()
     cur_thread.execute(f'''SELECT rating FROM ratings WHERE user_id={user_id};''')
     curr_rating = cur_thread.fetchone()
-    if len(curr_rating) == 0 or curr_rating is None:
-        curr_rating = 100
+
+    if curr_rating is not None and len(curr_rating) != 0:
+        curr_rating = curr_rating[0]
     else:
-        if curr_rating[0] is None:
-            curr_rating = 100
-        else:
-            curr_rating = curr_rating[0]
+        curr_rating = 100.0
 
     if change_val != 0:
-        curr_rating = (1 - filter_val) * 100 + filter_val * change_val
+        curr_rating = (1 - filter_val) * curr_rating + filter_val * change_val
 
     curr_rating = min(max(curr_rating, 0), 100)
     cur_thread.execute(f'''INSERT INTO ratings VALUES ({user_id}, {curr_rating}) 
@@ -444,7 +442,7 @@ def get_media_messages(message):
     if date_time_last != date_time_req:
         bot.reply_to(message, 'Похоже ты пропустил занятие, друг мой)) Подари подарок!)')
         send_gift(message)
-        change_rating(-5)
+        change_rating(message.from_user.id, -5)
 
 
 @exception_catcher
