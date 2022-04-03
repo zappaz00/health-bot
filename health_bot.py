@@ -439,7 +439,10 @@ def get_media_messages(message):
             sticker = open('stickers/' + sticker_filenames[sticker_number], 'rb')
             bot.send_sticker(message.chat.id, sticker, message.id)
 
-    if date_time_last != date_time_req:
+    date_time_req_str = date_time_req.strftime("%m/%d/%Y")
+    date_time_last_str = date_time_last.strftime("%m/%d/%Y")
+
+    if date_time_last_str != date_time_req_str:
         bot.reply_to(message, 'Похоже ты пропустил занятие, друг мой)) Подари подарок!)')
         send_gift(message)
         change_rating(message.from_user.id, -5)
