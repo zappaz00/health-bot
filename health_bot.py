@@ -442,10 +442,10 @@ def get_media_messages(message):
     date_time_req_str = date_time_req.strftime("%m/%d/%Y")
     date_time_last_str = date_time_last.strftime("%m/%d/%Y")
 
-    if date_time_last_str != date_time_req_str:
-        bot.reply_to(message, 'Похоже ты пропустил занятие, друг мой)) Подари подарок!)')
-        send_gift(message)
-        change_rating(message.from_user.id, -5)
+    # if date_time_last_str != date_time_req_str:
+    #     bot.reply_to(message, 'Похоже ты пропустил занятие, друг мой)) Подари подарок!)')
+    #     send_gift(message)
+    #     change_rating(message.from_user.id, -5)
 
 
 @exception_catcher
