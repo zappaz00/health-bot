@@ -194,7 +194,10 @@ def change_rating(user_id, change_val):
     if len(curr_rating) == 0 or curr_rating is None:
         curr_rating = 100
     else:
-        curr_rating = curr_rating
+        if curr_rating[0] is None:
+            curr_rating = 100
+        else:
+            curr_rating = curr_rating[0]
 
     if change_val != 0:
         curr_rating = (1 - filter_val) * 100 + filter_val * change_val
@@ -441,7 +444,7 @@ def get_media_messages(message):
     if date_time_last != date_time_req:
         bot.reply_to(message, 'Похоже ты пропустил занятие, друг мой)) Подари подарок!)')
         send_gift(message)
-        change_rating(-1)
+        change_rating(-5)
 
 
 @exception_catcher
@@ -458,6 +461,9 @@ def send_love(message):
         return
 
     for user_love in users_love:
+        if user_love[1] is None and user_love[2] is None: #bot
+            continue
+
         user_button = types.InlineKeyboardButton(f'{user_love[1]} ({user_love[2]})', callback_data=user_love[0])
         markup.row(user_button)
 
@@ -466,7 +472,7 @@ def send_love(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def handle_love(call):
-    change_rating(call.data, +1)
+    change_rating(call.data, +5)
     bot.send_message(call.message.chat.id, 'Благодарность отправлена <3')
     bot.answer_callback_query(call.id)
 
