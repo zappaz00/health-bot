@@ -187,7 +187,7 @@ def send_debt(message):
 
 @exception_catcher
 def change_rating(user_id, change_val):
-    filter_val = 0.01
+    filter_val = 0.1
     cur_thread = db_engine.get_cursor()
     cur_thread.execute(f'''SELECT rating FROM ratings WHERE user_id={user_id};''')
     curr_rating = cur_thread.fetchone()
