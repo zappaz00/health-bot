@@ -1,5 +1,6 @@
 import datetime
 import telebot
+from telebot import types
 import os
 import logging
 import numpy as np
@@ -136,6 +137,7 @@ def send_help(message):
     bot.reply_to(message, '/check - сдать тренировку\n' 
                           '/debt - отработать долг за вчера\n'
                           '/gift - узнать, кому дарить подарочек\n'
+                          '/love - поблагодарить за подарочек\n'
                           '/plan - получить задание\n'
                           '/start - начать\n'
                           '/stat - запросить свою статистику')
@@ -275,7 +277,7 @@ def send_stat(message):
     message_str = message_str + f'Кол-во пропусков:    {pass_count}'
 
     rating_curr = change_rating(message.from_user.id, 0) #чтоб избежать отсутствия рейтинга
-    message_str = message_str + '\n' + f'Твой рейтинг: {rating_curr}'
+    message_str = message_str + '\n' + f'Твоя карма: {rating_curr}'
 
     if level_curr is not None and len(level_curr) != 0:
         cur_thread.execute(f'''SELECT name FROM levels WHERE level={level_curr[0]}''')
@@ -445,7 +447,28 @@ def get_media_messages(message):
 @exception_catcher
 @bot.message_handler(commands=['love'])
 def send_love(message):
-    change_rating(+1)
+    markup = types.InlineKeyboardMarkup()
+
+    cur_thread = db_engine.get_cursor()
+    cur_thread.execute(f'''SELECT DISTINCT user_id, firstname, username FROM user_levels''')
+    users_love = cur_thread.fetchall()
+
+    if users_love is None or len(users_love) == 0:
+        bot.reply_to(message, 'Некого благодарить(')
+        return
+
+    for user_love in users_love:
+        user_button = types.InlineKeyboardButton(f'{user_love[1]} ({user_love[2]})', callback_data=user_love[0])
+        markup.row(user_button)
+
+    bot.send_message(message.chat.id, 'Выбери кого поблагодарить ^^', reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def handle_love(call):
+    change_rating(call.data, +1)
+    bot.send_message(call.message.chat.id, 'Благодарность отправлена <3')
+    bot.answer_callback_query(call.id)
 
 
 init_db()
