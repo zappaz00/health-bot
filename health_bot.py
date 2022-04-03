@@ -194,7 +194,7 @@ def change_rating(user_id, change_val):
     if len(curr_rating) == 0 or curr_rating is None:
         curr_rating = 100
     else:
-        curr_rating = curr_rating[0]
+        curr_rating = curr_rating
 
     if change_val != 0:
         curr_rating = (1 - filter_val) * 100 + filter_val * change_val
