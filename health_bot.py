@@ -298,6 +298,18 @@ def send_stat(message):
 
 
 @exception_catcher
+@bot.message_handler(commands=['test'])
+def send_test(message):
+    cur_thread = db_engine.get_cursor()
+    cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} 
+                                                    AND chat_id={message.chat.id} 
+                                                    ORDER BY date DESC LIMIT 1''')
+
+    user_last_activity = cur_thread.fetchone()
+    bot.reply_to(message, f'{user_last_activity}')
+
+
+@exception_catcher
 def give_achieve(user_id, chat_id, cur_thread):
     # выясним какое достижение можно выдать
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={user_id} AND action_id=0 AND chat_id={chat_id};''')
