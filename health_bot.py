@@ -305,7 +305,7 @@ def send_test(message):
                                                     AND chat_id={message.chat.id} 
                                                     ORDER BY date DESC LIMIT 10''')
 
-    user_last_activity = cur_thread.fetchone()
+    user_last_activity = cur_thread.fetchall()
     bot.reply_to(message, f'{user_last_activity}')
 
 
