@@ -296,22 +296,9 @@ def send_stat(message):
 
     bot.reply_to(message, message_str)
 
-
-@exception_catcher
-@bot.message_handler(commands=['test'])
-def send_test(message):
-    cur_thread = db_engine.get_cursor()
-    cur_thread.execute(f'''SELECT date FROM activity WHERE user_id={message.from_user.id} 
-                                                       AND chat_id={message.chat.id}''')
-
-    user_activities = cur_thread.fetchall()
-    user_activity_dates = []
-    for user_activity in user_activities:
-        user_activity_dates.append(datetime.strptime(user_activity[0], "%m/%d/%Y"))
-
-    user_activity_dates.sort(reverse=True)
-    bot.reply_to(message, f'{user_activity_dates[0].strftime("%m/%d/%Y")}')
-
+# @exception_catcher
+# @bot.message_handler(commands=['test'])
+# def send_test(message):
 
 @exception_catcher
 def give_achieve(user_id, chat_id, cur_thread):
@@ -396,12 +383,16 @@ def get_media_messages(message):
     if user_state is None or (len(user_state) != 0 and user_state[1] != 1):
         return
 
-    cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} 
-                                                    AND chat_id={message.chat.id} 
-                                                    ORDER BY date DESC LIMIT 1''')
+    cur_thread.execute(f'''SELECT date FROM activity WHERE user_id={message.from_user.id} 
+                                                       AND chat_id={message.chat.id}''')
 
-    user_last_activity = cur_thread.fetchone()
-    date_time_last = datetime.strptime(user_last_activity[1], "%m/%d/%Y")
+    user_activities = cur_thread.fetchall()
+    user_activity_dates = []
+    for user_activity in user_activities:
+        user_activity_dates.append(datetime.strptime(user_activity[0], "%m/%d/%Y"))
+
+    user_activity_dates.sort(reverse=True)
+    date_time_last = user_activity_dates[0]
     date_time_req = datetime.fromtimestamp(message.date, timezone('Europe/Moscow')) - timedelta(days=1)
 
     cur_thread.execute(f'''INSERT INTO user_states VALUES ({message.from_user.id}, 0) 
@@ -458,10 +449,10 @@ def get_media_messages(message):
     date_time_req_str = date_time_req.strftime("%m/%d/%Y")
     date_time_last_str = date_time_last.strftime("%m/%d/%Y")
 
-    # if date_time_last_str != date_time_req_str:
-    #     bot.reply_to(message, 'Похоже ты пропустил занятие, друг мой)) Подари подарок!)')
-    #     send_gift(message)
-    #     change_rating(message.from_user.id, -5)
+    if date_time_last_str != date_time_req_str:
+        bot.reply_to(message, 'Похоже ты пропустил занятие, друг мой)) Подари подарок!)')
+        send_gift(message)
+        change_rating(message.from_user.id, -5)
 
 
 @exception_catcher
