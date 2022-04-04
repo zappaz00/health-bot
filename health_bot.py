@@ -301,12 +301,13 @@ def send_stat(message):
 @bot.message_handler(commands=['test'])
 def send_test(message):
     cur_thread = db_engine.get_cursor()
-    cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} 
-                                                    AND chat_id={message.chat.id} 
-                                                    ORDER BY date DESC LIMIT 10''')
+    cur_thread.execute(f'''SELECT date FROM activity WHERE user_id={message.from_user.id} 
+                                                       AND chat_id={message.chat.id}''')
 
     user_last_activity = cur_thread.fetchall()
-    bot.reply_to(message, f'{user_last_activity}')
+    user_last_activity_dates = datetime.strptime(user_last_activity, "%m/%d/%Y")
+    user_last_activity_dates.sort(reverse=True)
+    bot.reply_to(message, f'{user_last_activity_dates[0].strftime("%m/%d/%Y")}')
 
 
 @exception_catcher
