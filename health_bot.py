@@ -307,7 +307,7 @@ def send_test(message):
     user_activities = cur_thread.fetchall()
     user_activity_dates = []
     for user_activity in user_activities:
-        user_activity_dates.append(datetime.strptime(user_activity, "%m/%d/%Y"))
+        user_activity_dates.append(datetime.strptime(user_activity[0], "%m/%d/%Y"))
 
     user_activity_dates.sort(reverse=True)
     bot.reply_to(message, f'{user_activity_dates[0].strftime("%m/%d/%Y")}')
