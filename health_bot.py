@@ -303,7 +303,7 @@ def send_test(message):
     cur_thread = db_engine.get_cursor()
     cur_thread.execute(f'''SELECT * FROM activity WHERE user_id={message.from_user.id} 
                                                     AND chat_id={message.chat.id} 
-                                                    ORDER BY date ASC LIMIT 1''')
+                                                    ORDER BY date DESC''')
 
     user_last_activity = cur_thread.fetchone()
     bot.reply_to(message, f'{user_last_activity}')
