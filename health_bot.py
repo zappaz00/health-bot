@@ -304,10 +304,13 @@ def send_test(message):
     cur_thread.execute(f'''SELECT date FROM activity WHERE user_id={message.from_user.id} 
                                                        AND chat_id={message.chat.id}''')
 
-    user_last_activity = cur_thread.fetchall()
-    user_last_activity_dates = datetime.strptime(user_last_activity, "%m/%d/%Y")
-    user_last_activity_dates.sort(reverse=True)
-    bot.reply_to(message, f'{user_last_activity_dates[0].strftime("%m/%d/%Y")}')
+    user_activities = cur_thread.fetchall()
+    user_activity_dates = []
+    for user_activity in user_activities:
+        user_activity_dates.append(datetime.strptime(user_activity, "%m/%d/%Y"))
+
+    user_activity_dates.sort(reverse=True)
+    bot.reply_to(message, f'{user_activity_dates[0].strftime("%m/%d/%Y")}')
 
 
 @exception_catcher
