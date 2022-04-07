@@ -198,7 +198,7 @@ def change_rating(user_id, change_val):
         curr_rating = 100.0
 
     if change_val != 0:
-        curr_rating = (1 - filter_val) * curr_rating + filter_val * change_val
+        curr_rating = curr_rating + change_val
 
     curr_rating = min(max(curr_rating, 0), 100)
     cur_thread.execute(f'''INSERT INTO ratings VALUES ({user_id}, {curr_rating}) 
