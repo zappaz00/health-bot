@@ -222,6 +222,25 @@ def send_plan(message):
 
 
 @exception_catcher
+@bot.message_handler(commands=['gift_test'])
+def send_gift_test(message):
+    cur_thread = db_engine.get_cursor()
+    cur_thread.execute(f'''SELECT DISTINCT user_id FROM activity WHERE user_id!={message.from_user.id} 
+                       AND chat_id={message.chat.id}''')
+    users_gift = cur_thread.fetchall()
+
+    if users_gift is None or len(users_gift) == 0:
+        bot.reply_to(message, 'Некому дарить подарочек(')
+        return
+
+    for iter_ctr in range(100):
+        user_gift_id = randint(0, len(users_gift) - 1)
+        user_gift_id = users_gift[user_gift_id][0]
+        chat_member = bot.get_chat_member(message.chat.id, user_gift_id)
+        bot.reply_to(message, f'{chat_member.user.first_name} ({chat_member.user.username})')
+
+
+@exception_catcher
 @bot.message_handler(commands=['gift'])
 def send_gift(message):
     bot.send_chat_action(message.chat.id, 'typing')
