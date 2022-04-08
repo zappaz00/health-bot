@@ -2,6 +2,7 @@ import datetime
 import telebot
 from telebot import types
 import os
+import random
 import logging
 import numpy as np
 from datetime import datetime, timedelta
@@ -20,6 +21,7 @@ root_logger.addHandler(handler)
 
 token = os.getenv("HEALTH_TOKEN")
 bot = telebot.TeleBot(token)
+random.seed(datetime.now())
 
 
 class DbEngine:
