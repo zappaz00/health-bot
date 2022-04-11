@@ -435,7 +435,7 @@ def get_media_messages(message):
         date_time_req_str = date_time_req.strftime("%m/%d/%Y")
         cur_thread.execute(f'''SELECT date FROM activity WHERE user_id={message.from_user.id} 
                                                            AND chat_id={message.chat.id} 
-                                                           AND date={date_time_req_str}''')
+                                                           AND date='{date_time_req_str}';''')
 
         user_activities = cur_thread.fetchall()
 
