@@ -21,7 +21,7 @@ root_logger.addHandler(handler)
 
 token = os.getenv("HEALTH_TOKEN")
 bot = telebot.TeleBot(token)
-random.seed(datetime.now())
+random.seed(datetime.now().timestamp())
 
 
 class DbEngine:
